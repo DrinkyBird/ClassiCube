@@ -1309,7 +1309,7 @@ static void NostalgiaScreen_Version(void* screen, void* widget) {
 	struct ButtonWidget* btn    = (struct ButtonWidget*)widget;
 
 	int ver = Game_Version.Version - 1;
-	if (ver < VERSION_0017) ver = VERSION_0030;
+	if (ver < VERSION_0015) ver = VERSION_0030;
 
 	Options_SetInt(OPT_GAME_VERSION, ver);
 	GameVersion_Load();

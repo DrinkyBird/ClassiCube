@@ -435,8 +435,11 @@ static cc_result MapState_Read(struct MapState* m) {
 *#########################################################################################################################*/
 void Classic_SendLogin(void) {
 	cc_uint8 data[131];
+	cc_uint32 packetSize;
 	data[0] = OPCODE_HANDSHAKE;
+	if (Game_Version.Protocol > PROTOCOL_0015)
 	{
+		packetSize = 131;
 		data[1]   = Game_Version.Protocol;
 		WriteString(&data[2],  &Game_Username);
 		WriteString(&data[66], &Game_Mppass);
@@ -452,7 +455,12 @@ void Classic_SendLogin(void) {
 		/*  will do nothing with the ping packet, and the aforementioned server software will be happy with 131 bytes */
 		data[130] = Game_Version.HasCPE ? 0x42 : (Game_Version.Protocol <= PROTOCOL_0019 ? OPCODE_PING : 0x00);
 	}
-	Server.SendData(data, 131);
+	else
+	{
+		packetSize = 65;
+		WriteString(&data[1],  &Game_Username);
+	}
+	Server.SendData(data, packetSize);
 }
 
 void Classic_SendChat(const cc_string* text, cc_bool partial) {
@@ -513,9 +521,12 @@ static void Classic_Handshake(cc_uint8* data) {
 
 	Server.Name.length = 0;
 	Server.MOTD.length = 0;
-	data++; /* protocol version */
 
-	ReadString(&data, &Server.Name);
+	if (Game_Version.Protocol > PROTOCOL_0015) {
+		data++; /* protocol version */
+		ReadString(&data, &Server.Name);
+	}
+
 	ReadString(&data, &Server.MOTD);
 	Chat_SetLogName(&Server.Name);
 
@@ -799,7 +810,18 @@ static void Classic_ReadAbsoluteLocation(cc_uint8* data, EntityID id, cc_uint8 f
 	UpdateLocation(id, &update);
 }
 
-#define Classic_HandshakeSize() (Game_Version.Protocol > PROTOCOL_0019 ? 131 : 130)
+static int Classic_HandshakeSize(void) {
+	if (Game_Version.Protocol == PROTOCOL_0015) {
+		return 65;
+	}
+
+	if (Game_Version.Protocol <= PROTOCOL_0019) {
+		return 130;
+	}
+
+	return 131;
+}
+
 static void Classic_Reset(void) {
 	Stream_ReadonlyMemory(&map_part, NULL, 0);
 	map_begunLoading = false;
@@ -817,7 +839,7 @@ static void Classic_Reset(void) {
 	Net_Set(OPCODE_RELPOS_AND_ORI_UPDATE, Classic_RelPosAndOrientationUpdate, 7);
 	Net_Set(OPCODE_RELPOS_UPDATE, Classic_RelPositionUpdate, 5);
 	Net_Set(OPCODE_ORI_UPDATE, Classic_OrientationUpdate, 4);
-	Net_Set(OPCODE_REMOVE_ENTITY, Classic_RemoveEntity, 2);
+	Net_Set(Game_Version.Protocol > PROTOCOL_0015 ? OPCODE_REMOVE_ENTITY : OPCODE_REMOVE_ENTITY_0015, Classic_RemoveEntity, 2);
 
 	Net_Set(OPCODE_MESSAGE, Classic_Message, 66);
 	Net_Set(OPCODE_KICK, Classic_Kick, 65);

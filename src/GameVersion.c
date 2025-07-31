@@ -65,14 +65,20 @@ static const struct GameVersion version_0019 = {
 };
 static const struct GameVersion version_0017 = {
 	"0.0.17a", false, VERSION_0017,
-	PROTOCOL_0017, BLOCK_LEAVES, 
-	 6, sizeof(v4_inventory), v4_inventory, v4_hotbar,
-	 "texpacks/default_0023.zip"
+	PROTOCOL_0017, BLOCK_LEAVES,
+	6, sizeof(v4_inventory), v4_inventory, v4_hotbar,
+	"texpacks/default_0023.zip"
+};
+static const struct GameVersion version_0015 = {
+	"0.0.15a mptest 1", false, VERSION_0015,
+	PROTOCOL_0015, BLOCK_LEAVES,
+	6, sizeof(v4_inventory), v4_inventory, v4_hotbar,
+	"texpacks/default_0023.zip"
 };
 
 void GameVersion_Load(void) {
 	cc_bool hasCPE = !Game_ClassicMode && Options_GetBool(OPT_CPE, true);
-	int version    = Options_GetInt(OPT_GAME_VERSION, VERSION_0017, VERSION_0030, VERSION_0030);
+	int version    = Options_GetInt(OPT_GAME_VERSION, VERSION_0015, VERSION_0030, VERSION_0030);
 	const struct GameVersion* ver = &version_cpe;
 
 	if (hasCPE) {
@@ -85,6 +91,8 @@ void GameVersion_Load(void) {
 		ver = &version_0019;
 	} else if (version == VERSION_0017) {
 		ver = &version_0017;
+	} else if (version == VERSION_0015) {
+		ver = &version_0015;
 	}
 
 	Game_Version = *ver;
